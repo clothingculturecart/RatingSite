@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f5f5f5;
+    }
+    .card {
+      background: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      width: 320px;
+    }
+    h3 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .block {
+      margin-bottom: 16px;
+    }
+    .label {
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .stars {
+      display: flex;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .star {
+      font-size: 28px;
+      color: #ccc;
+    }
+    .star.active {
+      color: #ffb400;
+    }
+    textarea { /* New Style for Textarea */
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-sizing: border-box;
+      resize: vertical;
+      min-height: 80px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #000;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    #status {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h3>Rate Your Experience</h3>
+
+    <div class="block">
+      <span class="label">Quality &amp; Design of T-shirts</span>
+      <div class="stars" data-type="quality"></div>
+    </div>
+
+    <div class="block">
+      <span class="label">Cart Infrastructure</span>
+      <div class="stars" data-type="cart"></div>
+    </div>
+
+    <div class="block">
+      <span class="label">People Interaction</span>
+      <div class="stars" data-type="people"></div>
+    </div>
+    
+    <div class="block">
+      <span class="label">Additional Feedback (Optional)</span>
+      <textarea id="additional-feedback" placeholder="Share your thoughts..."></textarea>
+    </div>
+    <button id="submit" disabled="">Submit</button>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    const ratings = {
+      quality: 0,
+      cart: 0,
+      people: 0
+    };
+
+    const submitBtn = document.getElementById("submit");
+    const status = document.getElementById("status");
+    const feedbackTextarea = document.getElementById("additional-feedback"); // Get the new textarea
+
+    document.querySelectorAll(".stars").forEach(container => {
+      const type = container.dataset.type;
+
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement("span");
+        star.innerHTML = "★";
+        star.classList.add("star");
+
+        star.onclick = () => {
+          ratings[type] = i;
+          updateStars(container, i);
+          checkReady();
+        };
+
+        container.appendChild(star);
+      }
+    });
+
+    function updateStars(container, value) {
+      container.querySelectorAll(".star").forEach((s, i) => {
+        s.classList.toggle("active", i < value);
+      });
+    }
+
+    function checkReady() {
+      // Submission is only enabled when all three star ratings are set (non-zero)
+      submitBtn.disabled = !(
+        ratings.quality &&
+        ratings.cart &&
+        ratings.people
+      );
+    }
+
+    submitBtn.onclick = () => {
+      if (submitBtn.disabled) return;
+
+      status.innerText = "Submitting...";
+      
+      // Get the value from the new textarea and encode it for the URL
+      const additionalFeedback = encodeURIComponent(feedbackTextarea.value);
+
+      // Construct the URL with all ratings and the additional feedback
+      const url =
+        "https://script.google.com/macros/s/AKfycbyJ4uLBwEvSD4MFxZky8fLLc_KZRfMIkU-Wagkp0fKRmOm8jsRRHPFW3Qt6gryKEDdu/exec" +
+        "?quality=" + ratings.quality +
+        "&cart=" + ratings.cart +
+        "&people=" + ratings.people +
+        "&feedback="+ additionalFeedback; // NEW: Append the optional feedback
+
+      fetch(url);
+
+      // 🔒 LOCK UI
+      submitBtn.disabled = true;
+      document.querySelectorAll(".star").forEach(s => {
+        s.style.pointerEvents = "none";
+        s.style.opacity = "0.5";
+      });
+      // Disable the textarea too
+      feedbackTextarea.disabled = true;
+
+      status.innerText = "Thank you for your feedback";
+    };
+  </script>
+</body>
+</html>
